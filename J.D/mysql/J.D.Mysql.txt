@@ -1,0 +1,69 @@
+create table user(
+id int not null auto_increment,
+user_id int,
+age varchar(20),
+sex float,
+user_lv_cd int,
+user_reg_tm date,
+primary key (id)
+);
+
+create table product(
+id int not null auto_increment,
+sku_id int,
+a1 int,
+a2 int,
+a3 int,
+cate int,
+brand int,
+primary key (id)
+);
+
+create table comment(
+id int not null auto_increment,
+dt date,
+sku_id int,
+comment_num int,
+has_bad_comment int,
+bad_comment_rate float,
+primary key (id)
+);
+
+create table action_201602(
+user_id int,
+sku_id int,
+time datetime,
+model_id varchar(20),
+type int,
+cate int,
+brand int,
+id int not null auto_increment,
+primary key (id)
+);
+
+create table action_3(
+id int not null auto_increment,
+user_id int,
+sku_id int,
+time datetime,
+model_id varchar(20),
+type int,
+cate int,
+brand int,
+primary key (id)
+);
+
+create table action_4(
+id int not null auto_increment,
+user_id int,
+sku_id int,
+time datetime,
+model_id varchar(20),
+type int,
+cate int,
+brand int,
+primary key (id)
+);
+
+数据导入
+load data local infile 'E:\github\\J.D\\JData\\JData_Action_201604.csv' into table action_201604 FIELDS ESCAPED BY    '\\' TERMINATED BY     ',' ENCLOSED BY   '"' LINES TERMINATED BY   '\n'  ( user_id , sku_id ,time, model_id ,type , cate , brand );
