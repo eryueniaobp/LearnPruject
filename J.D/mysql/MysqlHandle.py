@@ -2,6 +2,7 @@
 import MySQLdb
 import datetime
 import time
+import os
 class MysqlHandle:
 
     def __init__(self):
@@ -9,15 +10,15 @@ class MysqlHandle:
         self.cursor = self.mysql_conn.cursor()
 
     # 读取前三天action 表中数据
-    def readAction(self):
-        sql = "select * from action_201602 where '2016-02-03 00:00:00'>time and time>='2016-01-31 00:00:00'"
+    def readAction(self,begin,over):
+        sql = "select * from action_201602 where '"+str(over)+"'>time and time>='"+str(begin)+"'"
         self.cursor.execute(sql)
         get_data = self.cursor.fetchall()
         return get_data
 
     #读取后五天是否购买数据
-    def readFiveAction(self,user_id,sku_id):
-        sql = "select * from action_201602 where '2016-02-03 00:00:00'<=time and time<'2016-02-08 00:00:00' and user_id="+str(user_id)+" and sku_id="+str(sku_id)+" and type=4"
+    def readFiveAction(self,user_id,sku_id,begin,over):
+        sql = "select * from action_201602 where '"+str(begin)+"'<=time and time<'"+str(over)+"' and user_id="+str(user_id)+" and sku_id="+str(sku_id)+" and type=4"
         self.cursor.execute(sql)
         data = self.cursor.fetchall()
         if len(data) == 0:
@@ -25,9 +26,16 @@ class MysqlHandle:
         else:
             return 1
 
+    # 时间推导
+    def timeToTime(self):
+        beginTime = datetime.datetime(2016,01,31,00,00,00)
+        overTime = beginTime + datetime.timedelta(days=3)
+        five_Over = overTime + datetime.timedelta(days=5)
+        self.get_UserProduct(begin=beginTime,over=overTime,fiveOver=five_Over)
+
     # 组装样例
-    def get_UserProduct(self):
-        action_data = self.readAction()
+    def get_UserProduct(self,begin,over,fiveOver):
+        action_data = self.readAction(begin=begin,over=over)
         print "begin"
         for l in action_data:
             user_id = l[1] #用户id
@@ -78,7 +86,8 @@ class MysqlHandle:
                 sex_3 = 1
 
             user_lv = data_u[4] #用户等级
-            user_reg = time.mktime(time.strptime(str(data_u[5]), '%Y-%m-%d'))   #用户注册时间戳
+
+            user_reg = self.timeSub(now_time=over,last_time=data_u[5])  #用户数注册天数
 
 # 获取对应商品信息
             sql_p = "select * from product where sku_id="+str(l[2])
@@ -101,28 +110,45 @@ class MysqlHandle:
             sql_m = "select * from comment where sku_id="+str(l[2])
             self.cursor.execute(sql_m)
             data_m = self.cursor.fetchall()
-            dt = 0  #评论截止时间
+            dt = 0  #评论截止天数
             comment_num = -1    #评论累计数分段
             has_bad_comment = -1    #评论是否有差评
             bad_comment_rate = -1   #差评率
             if len(data_m) != 0:
-                dt = time.mktime(time.strptime(str(data_m[0][1]),'%Y-%m-%d'))
+                # dt = time.mktime(time.strptime(str(data_m[0][1]),'%Y-%m-%d'))
+                dt = self.timeSub(now_time=over,last_time=data_m[0][1]) #评论截止天数
                 comment_num = data_m[0][3]
                 has_bad_comment = data_m[0][4]
                 bad_comment_rate = data_m[0][5]
 
 #五天以后是否购买
-            state = self.readFiveAction(user_id,sku_id)
+            state = self.readFiveAction(user_id=user_id,sku_id=sku_id,begin=over,over=fiveOver)
 
 # 拼接样品数据
-            data_str = str(state)+','+str(user_id)+','+str(sku_id)+','+str(type_1)+','+str(type_2)+','+str(type_3)+','+str(type_4)+','+str(type_5)+','+str(type_6)+','+str(action_time)+','+str(model_id)+','+str(cate)+','+str(brand)+','+str(age)+','+str(sex_1)+','+str(sex_2)+','+str(sex_3)+','+str(user_lv)+','+str(user_reg)+','+str(a1)+','+str(a2)+','+str(a3)+','+str(cate_p)+','+str(brand_p)+','+str(dt)+','+str(comment_num)+','+str(has_bad_comment)+','+str(bad_comment_rate)+'\n'
-            print data_str
-            with open("2016-02-02.csv","a") as l:
+            data_str = str(over)+','+str(user_id)+','+str(sku_id)+','+str(type_1)+','+str(type_2)+','+str(type_3)+','+str(type_4)+','+str(type_5)+','+str(type_6)+','+str(action_time)+','+str(model_id)+','+str(cate)+','+str(brand)+','+str(age)+','+str(sex_1)+','+str(sex_2)+','+str(sex_3)+','+str(user_lv)+','+str(user_reg)+','+str(a1)+','+str(a2)+','+str(a3)+','+str(cate_p)+','+str(brand_p)+','+str(dt)+','+str(comment_num)+','+str(has_bad_comment)+','+str(bad_comment_rate)+'\n'
+            label_str = str(over)+','+str(state)+','+str(user_id)+','+str(sku_id)+'\n'
+            print '样本: '+data_str
+            print 'label: '+label_str
+
+            with open("./smple/"+str(over)[:10]+".csv","a") as l:
                 l.write(data_str)
+
+            # 判断文件是否存
+            if os.path.exists("./smple/label_"+str(over)[:10]+".csv"):
+                with open("./smple/label_"+str(over)[:10]+".csv","a+") as l:
+                    for i in l:
+                        if label_str in i:
+                            break
+                        else:
+                            l.write(label_str)
+                            break
+            else:
+                with open("./smple/label_"+str(over)[:10]+".csv", "w") as l:
+                    l.write('date,label,user_id,sku_id\n')
 
     # 计算天数
     def timeSub(self,now_time,last_time):
-        return abs((time.mktime(time.strptime(now_time, '%Y-%m-%d')) - time.mktime(time.strptime(last_time, '%Y-%m-%d'))) / 86400)
+        return abs((time.mktime(time.strptime(str(now_time)[:10], '%Y-%m-%d')) - time.mktime(time.strptime(str(last_time), '%Y-%m-%d'))) / 86400)
 
     # 设置年龄区段
     def getage(self,str):
@@ -155,15 +181,13 @@ class MysqlHandle:
         return get_data[0][0]
 
     def test(self):
-        sql = "select * from action_201602 where id=2"
-        self.cursor.execute(sql)
-        data = self.cursor.fetchall()[0]
-        print str(data[3])
-        # print time.mktime(time.strptime(data[3],'%Y-%m-%d %H:%M:%S'))
+        print
+
+
 
 if __name__=='__main__':
     Obj = MysqlHandle()
     # print Obj.getMinDate('Action_201602','time')
-    Obj.get_UserProduct()
-    # Obj.test()
+    # Obj.get_UserProduct()
+    Obj.timeToTime()
     # print Obj.readFiveAction('266079','138778')
