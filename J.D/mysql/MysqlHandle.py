@@ -29,9 +29,11 @@ class MysqlHandle:
     # 时间推导
     def timeToTime(self):
         beginTime = datetime.datetime(2016,01,31,00,00,00)
-        overTime = beginTime + datetime.timedelta(days=3)
-        five_Over = overTime + datetime.timedelta(days=5)
-        self.get_UserProduct(begin=beginTime,over=overTime,fiveOver=five_Over)
+        while str(beginTime + datetime.timedelta(days=8)) < '2016-03-01 00:00:00':
+            overTime = beginTime + datetime.timedelta(days=3)
+            five_Over = overTime + datetime.timedelta(days=5)
+            self.get_UserProduct(begin=beginTime,over=overTime,fiveOver=five_Over)
+            beginTime = beginTime + datetime.timedelta(days=1)
 
     # 组装样例
     def get_UserProduct(self,begin,over,fiveOver):
