@@ -30,6 +30,7 @@ class MysqlHandle:
     def timeToTime(self):
         beginTime = datetime.datetime(2016,01,31,00,00,00)
         while str(beginTime + datetime.timedelta(days=8)) < '2016-03-01 00:00:00':
+            print "开始时间："+str(beginTime)
             overTime = beginTime + datetime.timedelta(days=3)
             five_Over = overTime + datetime.timedelta(days=5)
             self.get_UserProduct(begin=beginTime,over=overTime,fiveOver=five_Over)
@@ -37,9 +38,11 @@ class MysqlHandle:
 
     # 组装样例
     def get_UserProduct(self,begin,over,fiveOver):
+        print "开始加载action数据"
         action_data = self.readAction(begin=begin,over=over)
-        print "begin"
+        print "加载成功"
         for l in action_data:
+            print "action_id: "+str(l[0])
             user_id = l[1] #用户id
             sku_id = l[2] #商品id
             type_1 = 0  #浏览
@@ -76,6 +79,8 @@ class MysqlHandle:
             self.cursor.execute(sql_u)
             data_u = self.cursor.fetchall()[0]
 
+            print "user表ID："+str(data_u[0])
+
             age = self.getage(data_u[2]) #年龄
             sex_1 = 0   #性别 男
             sex_2 = 0   #性别 女
@@ -102,11 +107,14 @@ class MysqlHandle:
             cate_p = 0 #产品表品类
             brand_p = 0 #产品表品牌
             if len(data_p) != 0:
+                print "商品表ID："+str(data_p[0][0])
                 a1 = data_p[0][2]
                 a2 = data_p[0][3]
                 a3 = data_p[0][4]
                 cate_p = data_p[0][5]
                 brand_p = data_p[0][6]
+            else:
+                print "无该商品详情"
 
 # 获取对应评论信息
             sql_m = "select * from comment where sku_id="+str(l[2])
@@ -117,11 +125,14 @@ class MysqlHandle:
             has_bad_comment = -1    #评论是否有差评
             bad_comment_rate = -1   #差评率
             if len(data_m) != 0:
+                print "评论表ID："+str(data_m[0][0])
                 # dt = time.mktime(time.strptime(str(data_m[0][1]),'%Y-%m-%d'))
                 dt = self.timeSub(now_time=over,last_time=data_m[0][1]) #评论截止天数
                 comment_num = data_m[0][3]
                 has_bad_comment = data_m[0][4]
                 bad_comment_rate = data_m[0][5]
+            else:
+                print "无该商品评论详情"
 
 #五天以后是否购买
             state = self.readFiveAction(user_id=user_id,sku_id=sku_id,begin=over,over=fiveOver)
@@ -134,19 +145,24 @@ class MysqlHandle:
 
             with open("./smple/"+str(over)[:10]+".csv","a") as l:
                 l.write(data_str)
-
+            print "样本写入成功"
             # 判断文件是否存
             if os.path.exists("./smple/label_"+str(over)[:10]+".csv"):
+                w_state = True
                 with open("./smple/label_"+str(over)[:10]+".csv","a+") as l:
                     for i in l:
-                        if label_str in i:
+                        if label_str == i:
+                            w_state = False
                             break
-                        else:
-                            l.write(label_str)
-                            break
+                    if w_state:
+                        l.write(label_str)
+                    else:
+                        print "该 label 存在"
             else:
                 with open("./smple/label_"+str(over)[:10]+".csv", "w") as l:
                     l.write('date,label,user_id,sku_id\n')
+            print "label 写入成功"
+            print "======================================================="
 
     # 计算天数
     def timeSub(self,now_time,last_time):
@@ -181,7 +197,10 @@ class MysqlHandle:
         self.cursor.execute(sql)
         get_data = self.cursor.fetchall()
         return get_data[0][0]
-
+    # log 日志记录
+    def logRecord(self):
+        with open("log.txt","a+") as l:
+            l.write()
     def test(self):
         print
 
