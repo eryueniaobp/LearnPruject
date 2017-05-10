@@ -18,6 +18,7 @@ cate int,
 brand int,
 primary key (id)
 );
+load data local infile 'D:\\github\\LearnPruject\\J.D\\JData\\JData_Product.csv' into table product FIELDS ESCAPED BY    '\\' TERMINATED BY     ',' ENCLOSED BY   '"' LINES TERMINATED BY   '\n'  ( sku_id ,a1,a2 ,a3 , cate , brand );
 
 create table comment(
 id int not null auto_increment,
@@ -28,8 +29,9 @@ has_bad_comment int,
 bad_comment_rate float,
 primary key (id)
 );
-
+load data local infile 'D:\\github\\LearnPruject\\J.D\\JData\\JData_Comment.csv' into table comment FIELDS ESCAPED BY    '\\' TERMINATED BY     ',' ENCLOSED BY   '"' LINES TERMINATED BY   '\n'  ( dt , sku_id ,comment_num, has_bad_comment ,bad_comment_rate );
 create table action_201602(
+id int not null auto_increment,
 user_id int,
 sku_id int,
 time datetime,
@@ -37,7 +39,6 @@ model_id varchar(20),
 type int,
 cate int,
 brand int,
-id int not null auto_increment,
 primary key (id)
 );
 
@@ -53,7 +54,7 @@ brand int,
 primary key (id)
 );
 
-create table action_4(
+create table action_201604(
 id int not null auto_increment,
 user_id int,
 sku_id int,
@@ -65,5 +66,4 @@ brand int,
 primary key (id)
 );
 
-数据导入
-load data local infile 'E:\github\\J.D\\JData\\JData_Action_201604.csv' into table action_201604 FIELDS ESCAPED BY    '\\' TERMINATED BY     ',' ENCLOSED BY   '"' LINES TERMINATED BY   '\n'  ( user_id , sku_id ,time, model_id ,type , cate , brand );
+load data local infile 'D:\\github\\LearnPruject\\J.D\\JData\\JData_Action_201602.csv' into table action_201602 FIELDS ESCAPED BY    '\\' TERMINATED BY     ',' ENCLOSED BY   '"' LINES TERMINATED BY   '\n'  ( user_id , sku_id ,time, model_id ,type , cate , brand );
